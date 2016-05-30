@@ -1,0 +1,10 @@
+# Test matrix.
+---
+python:
+    zerorpc_src: ../zerorpc-python
+    vers:
+        - 2.6
+        - 2.7
+        - 3.4
+node:
+    zerorpc_src: ../zerorpc-node

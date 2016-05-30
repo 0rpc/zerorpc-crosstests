@@ -1,0 +1,27 @@
+language: python
+python: 3.4
+sudo: false
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - python-dev
+      - libevent-dev
+      - libzmq3-dev
+      - g++-5
+before_install:
+  - nvm install v4.2.6
+  - npm install -g npm
+  - npm install -g gyp
+  - pip install --upgrade pip
+  - pip install virtualenv
+  - git clone --branch=python3.4 https://github.com/0rpc/zerorpc-python.git ../zerorpc-python
+  - git clone https://github.com/0rpc/zerorpc-node.git ../zerorpc-node
+install:
+  - pip install -r requirements.txt
+before_script:
+  - npm config set python python2.7  # keep node/gyp happy
+  - env CC=gcc-5 CXX=g++-5 ./crosstests.py setup
+script:
+  - ./crosstests.py test

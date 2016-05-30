@@ -1,0 +1,10 @@
+{
+    "name": "zerorpc-echotest",
+    "version": "0.0.1",
+    "author": "François-Xavier Bourlet <bombela+zerorpc@gmail.com>",
+    "license": "MIT",
+	"description": "part of zerorpc crosslanguage testing",
+	"dependencies": {
+		"zerorpc": "*"
+	}
+}

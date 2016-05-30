@@ -1,0 +1,43 @@
+#!/bin/bash
+
+set -e
+
+if [[ $# != 2 ]]; then
+    echo "usage: $0 ZERORPC_SRC VERSION"
+    exit -2
+fi
+
+ZERORPC_SRC=$1
+VERSION=$2
+ENV_DIR_P=".../$(basename $PWD)"
+
+if [ -x "./bin/python" ]; then
+    echo "$ENV_DIR_P - reuse env"
+else
+    echo "$ENV_DIR_P - new env..."
+    ARGS=
+    if [[ "$VERSION" != "default" ]]; then
+        ARGS="$ARGS -p python${VERSION}"
+    fi
+    virtualenv $ARGS "./"
+fi
+
+echo "$ENV_DIR_P - activate..."
+source "./bin/activate"
+echo "$ENV_DIR_P - activated $(which python)"
+
+echo "Installing zerorpc (develop mode)..."
+pip install -e "$ZERORPC_SRC"
+
+echo "$ENV_DIR_P - Generating helper scripts..."
+SRC_DIR="$(readlink -f $(dirname $0))"
+PYTHON_BIN="$(readlink -f "./bin/python")"
+
+for helper in client server; do
+    cat > "./$helper" <<EOF
+#!/bin/sh
+exec "$PYTHON_BIN" "$SRC_DIR/$helper.py" \$@
+EOF
+    chmod +x "./$helper"
+done
+

@@ -1,0 +1,58 @@
+#!/bin/bash
+
+set -e
+
+if [[ $# != 2 ]]; then
+    echo "usage: $0 ZERORPC_SRC VERSION"
+    exit -2
+fi
+
+ZERORPC_SRC=$1
+VERSION=$2
+ENV_DIR_P=".../$(basename $PWD)"
+SRC_DIR="$(dirname "$(readlink -f "$0")")"
+
+echo "$ENV_DIR_P - new env..."
+if [[ "$VERSION" == "default" ]]; then
+	NODE_BIN="node"
+else
+	NODE_BIN="node-$VERSION"
+fi
+
+if which "$NODE_BIN"; then
+	NODE_BIN="$(which "$NODE_BIN")"
+	echo "$ENV_DIR_P - using node: $NODE_BIN"
+else
+	echo "$ENV_DIR_P - cannot find: $NODE_BIN"
+	exit -1
+fi
+
+echo "node: $(node --version)"
+echo "npm: $(npm --version)"
+
+echo "sym-linking test package..."
+ln -sfv "$SRC_DIR/package.json" package.json
+
+echo "sym-linking zerorpc (develop mode)..."
+mkdir -p ./node_modules/zerorpc
+for src_file in index.js lib LICENSE package.json README.md; do
+	if [[ "$ZERORPC_SRC" == /* ]]; then
+		ln -sfv "$ZERORPC_SRC/$src_file" "./node_modules/zerorpc/$src_file"
+	else
+		ln -sfv "../../$ZERORPC_SRC/$src_file" "./node_modules/zerorpc/$src_file"
+	fi
+done
+
+echo "$ENV_DIR_P - Installing dependencies..."
+npm install
+
+echo "$ENV_DIR_P - Generating helper scripts..."
+
+for helper in client server; do
+    cat > "./$helper" <<EOF
+#!/bin/sh
+export NODE_PATH="$PWD/node_modules"
+exec "$NODE_BIN" "$SRC_DIR/$helper.js" \$@
+EOF
+    chmod +x "./$helper"
+done
