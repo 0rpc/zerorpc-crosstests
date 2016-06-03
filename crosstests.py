@@ -12,7 +12,7 @@ import fcntl
 import time
 import io 
 import errno
-
+import traceback
 
 class TestDef(object):
 
@@ -162,7 +162,7 @@ class TestPair(object):
                 print('!! test took too long!')
 
         except Exception as e:
-            print('!!', e)
+            traceback.print_exc()
         finally:
             if client and client.running:
                 print('-- killing client', client.process.pid)
@@ -191,9 +191,11 @@ class TestPair(object):
         (stderr_master, stderr_slave) = os.openpty()
         self.set_fd_nonblocking(stdout_master)
         self.set_fd_nonblocking(stderr_master)
-        stdout_master = io.BufferedReader(io.FileIO(stdout_master))
-        stderr_master = io.BufferedReader(io.FileIO(stderr_master))
-        process = subprocess.Popen(cmd, stdout=stdout_slave, stderr=stderr_slave)
+        stdout_master = os.fdopen(stdout_master, 'r')
+        stderr_master = os.fdopen(stderr_master, 'r')
+        process = subprocess.Popen(cmd, stdin=stdout_slave,
+                stdout=stdout_slave, stderr=stderr_slave, close_fds=True,
+                preexec_fn=os.setsid)
         os.close(stdout_slave)
         os.close(stderr_slave)
         print('-- pid', process.pid)
@@ -228,7 +230,7 @@ class TestPair(object):
                 elapsed = time.time() - start
                 for line in lines:
                     print('{0} [{1:.3f}s] {2}'.format(prefix, elapsed,
-                        str(line.rstrip(), 'utf-8')))
+                        line.rstrip()))
         return True
 
     @staticmethod
@@ -259,7 +261,7 @@ def action_test(home_dir, matrix, args):
     for test_pair in pairs:
         test_pair.run_test(home_dir)
 
-    print('-- summary')
+    print('-- summary --')
     passed = sum(1 for test_pair in pairs if test_pair.is_success())
     total = len(pairs)
     for test_pair in pairs:
