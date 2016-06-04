@@ -5,7 +5,7 @@ import sys
 import zerorpc
 
 
-logging.basicConfig()
+logging.basicConfig(level=logging.DEBUG)
 endpoint = sys.argv[1]
 
 class TestServer(zerorpc.Server):
